@@ -828,8 +828,10 @@ using namespace std;
                        ? [nameToStore stringByAppendingFormat:@"(%@)", symbolName] 
                        : [NSString stringWithFormat:@"0x%X (%@)", nlist->n_value, symbolName]);
         
-        [symbolNames setObject:nameToStore
-                        forKey:[NSNumber numberWithUnsignedLong:nlist->n_value]];
+        if(nameToStore){
+            [symbolNames setObject:nameToStore
+                              forKey:[NSNumber numberWithUnsignedLong:nlist->n_value]];
+        }
       }
     } 
     else
@@ -841,8 +843,11 @@ using namespace std;
       
       // fill in lookup table with undefined sybols (key equals (-1) * index)
       uint32_t key = *symbols.begin() - nlist - 1;
-      [symbolNames setObject:symbolName
-                      forKey:[NSNumber numberWithUnsignedLong:key]];
+      if(symbolNames) {
+         [symbolNames setObject:symbolName
+                            forKey:[NSNumber numberWithUnsignedLong:key]];
+      }
+        
     }
 
     [node.details setAttributesFromRowIndex:bookmark:MVMetaDataAttributeName,symbolName,
@@ -874,6 +879,9 @@ using namespace std;
     // accumulate search info
     NSUInteger bookmark = node.details.rowCount;
     NSString * symbolName = NSSTRING(strtab + nlist_64->n_un.n_strx);
+    if (symbolName == nil) {
+        continue;
+    }
     NSColor * color = nil;
     
     /* print the symbol nr */
@@ -992,8 +1000,10 @@ using namespace std;
                        ? [nameToStore stringByAppendingFormat:@"(%@)", symbolName] 
                        : [NSString stringWithFormat:@"0x%qX (%@)", nlist_64->n_value, symbolName]);
         
-        [symbolNames setObject:nameToStore
-                        forKey:[NSNumber numberWithUnsignedLongLong:nlist_64->n_value]];
+          if(nameToStore){
+              [symbolNames setObject:nameToStore
+                              forKey:[NSNumber numberWithUnsignedLongLong:nlist_64->n_value]];
+          }
       }
     } 
     else
@@ -1176,8 +1186,10 @@ using namespace std;
         }
 
         // fill in lookup table with special indirect sybols
-        [symbolNames setObject:symbolName
-                        forKey:[NSNumber numberWithUnsignedLong:indirectAddress]];
+          if (symbolName) {
+              [symbolNames setObject:symbolName
+                              forKey:[NSNumber numberWithUnsignedLong:indirectAddress]];
+          }
       }
         
       [node.details appendRow:@"":@"":@"Section"
@@ -1304,8 +1316,10 @@ using namespace std;
         }
         
         // fill in lookup table with special indirect sybols
-        [symbolNames setObject:symbolName
-                        forKey:[NSNumber numberWithUnsignedLongLong:indirectAddress]];
+          if(symbolName){
+              [symbolNames setObject:symbolName
+                              forKey:[NSNumber numberWithUnsignedLongLong:indirectAddress]];
+          }
       }
       
       [node.details appendRow:@"":@"":@"Section"
