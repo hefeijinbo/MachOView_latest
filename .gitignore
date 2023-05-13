@@ -41,3 +41,4 @@ otool_disasm/disasm.xcodeproj/.svn/text-base/project.pbxproj.svn-base
 *.xcuserstate
 *.xcbkptlist
 *.xcworkspacedata
+*.xcscheme

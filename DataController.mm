@@ -996,7 +996,7 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
 {
   switch (cpusubtype)
   {
-    default:                      return @"???";
+    default:                      return @"ARM64";
     case CPU_SUBTYPE_ARM64_ALL:   return @"ARM64_ALL";
     case CPU_SUBTYPE_ARM64_V8:    return @"ARM64_V8";
   }
