@@ -1207,10 +1207,10 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
-        [nc postNotificationName:MVThreadStateChangedNotification 
+        [nc postNotificationName:MVThreadStateChangedNotification
                           object:self
                         userInfo:[NSDictionary dictionaryWithObject:status forKey:MVStatusUserInfoKey]];
-    }
+    });
 }
 
 @end
