@@ -713,9 +713,15 @@ using namespace std;
                            :@""];
       
     [dataController read_uint32:range lastReadHex:&lastReadHex];
+      NSString *desc = @"String Table Index ";
+      
+      if (lastReadHex) {
+          desc =  [desc stringByAppendingString:[NSString stringWithFormat:@",#%ld",strtoul([lastReadHex UTF8String],0,16)]];
+      }
+      
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
-                           :@"String Table Index"
+                           :desc
                            :symbolName];
     
     [dataController read_uint8:range lastReadHex:&lastReadHex];
@@ -891,9 +897,15 @@ using namespace std;
                            :@""];
 
     [dataController read_uint32:range lastReadHex:&lastReadHex];
+      NSString *desc = @"String Table Index ";
+      
+      if (lastReadHex) {
+          desc =  [desc stringByAppendingString:[NSString stringWithFormat:@",#%ld",strtoul([lastReadHex UTF8String],0,16)]];
+      }
+      
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
-                           :@"String Table Index"
+                           :desc
                            :symbolName];
     
     [dataController read_uint8:range lastReadHex:&lastReadHex];
@@ -1015,6 +1027,7 @@ using namespace std;
       
       // fill in lookup table with undefined sybols (key equals (-1) * index)
       uint64_t key = *symbols_64.begin() - nlist_64 - 1;
+      symbolName = symbolName ? symbolName  : @"resolve failure";
       [symbolNames setObject:symbolName
                       forKey:[NSNumber numberWithUnsignedLongLong:key]];
     }
@@ -1124,6 +1137,8 @@ using namespace std;
       NSString * symbolName = nil;
       NSColor * color = nil;
         
+        [node.details appendRow:[NSString stringWithFormat:@"#%d",nindsym] :@"":@"":@""];
+        
       // read indirect symbol index
       uint32_t indirectIndex = [dataController read_uint32:range lastReadHex:&lastReadHex];
         
@@ -1135,11 +1150,16 @@ using namespace std;
                       format:@"index is out of range %u", indirectIndex];
         }
           
-        symbolName = NSSTRING(strtab + [self getSymbolByIndex:indirectIndex]->n_un.n_strx);
+          NSString *desc = @"Symbol Table Index ";
+          if (lastReadHex) {
+              desc =  [desc stringByAppendingString:[NSString stringWithFormat:@",#%ld",strtoul([lastReadHex UTF8String],0,16)]];
+          }
+          
+        symbolName = NSSTRING(strtab + [self getSymbol64ByIndex:indirectIndex]->n_un.n_strx);
           
         [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                                :lastReadHex
-                               :@"Symbol"
+                               :desc
                                :symbolName];
           
         // fill in lookup table with indirect sybols
@@ -1254,6 +1274,7 @@ using namespace std;
       NSString * symbolName = nil;
       NSColor * color = nil;
       
+     [node.details appendRow:[NSString stringWithFormat:@"#%d",nindsym] :@"":@"":@""];
       // read indirect symbol index
       uint32_t indirectIndex = [dataController read_uint32:range lastReadHex:&lastReadHex];
       
@@ -1267,9 +1288,14 @@ using namespace std;
         
         symbolName = NSSTRING(strtab + [self getSymbol64ByIndex:indirectIndex]->n_un.n_strx);
         
+          NSString *desc = @"Symbol Table Index ";
+          
+          if (lastReadHex) {
+              desc =  [desc stringByAppendingString:[NSString stringWithFormat:@",#%ld",strtoul([lastReadHex UTF8String],0,16)]];
+          }
         [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                                :lastReadHex
-                               :@"Symbol"
+                               :desc
                                :symbolName];
         
         // fill in lookup table with indirect sybols
@@ -1281,7 +1307,7 @@ using namespace std;
       {
         [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                                :lastReadHex
-                               :@"Symbol"
+                               :@"Symbol Table Index"
                                :@""];
         
         switch (indirectIndex)
@@ -1829,6 +1855,7 @@ using namespace std;
                                  caption:(NSString *)caption
                                 location:(uint32_t)location
                                   length:(uint32_t)length
+                                 is64Bit:(BOOL)is64Bit
 {
   MVNodeSaver nodeSaver;
   MVNode * node = [parent insertChildWithDetails:caption location:location length:length saver:nodeSaver];
@@ -1842,10 +1869,17 @@ using namespace std;
     dices.push_back(data_in_code_entry);
     
     [dataController read_uint32:range lastReadHex:&lastReadHex];
-    [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
-                           :lastReadHex
-                           :@"Offset"
-                           :[self findSymbolAtRVA:[self fileOffsetToRVA:data_in_code_entry->offset + imageOffset]]];
+    if (is64Bit) {
+      [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                             :lastReadHex
+                             :@"Offset"
+                             :[self findSymbolAtRVA64:[self fileOffsetToRVA64:data_in_code_entry->offset + imageOffset]]];
+    } else {
+      [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                             :lastReadHex
+                             :@"Offset"
+                             :[self findSymbolAtRVA:[self fileOffsetToRVA:data_in_code_entry->offset + imageOffset]]];
+    }
 
     [dataController read_uint16:range lastReadHex:&lastReadHex];
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
@@ -1867,6 +1901,54 @@ using namespace std;
   }
   
   return node;
+}
+
+- (MVNode *)createStrings:(MVNode *)parent
+                 caption:(NSString *)caption
+                location:(uint32_t)location
+                  length:(uint32_t)length
+{
+    MVNodeSaver nodeSaver;
+    MVNode * node = [parent insertChildWithDetails:caption location:location length:length saver:nodeSaver];
+    
+    NSRange range = NSMakeRange(location,0);
+    NSString * lastReadHex;
+    
+    int index = 0;
+    while (NSMaxRange(range) < location + length)
+    {
+        NSString * symbolName = [dataController read_string:range lastReadHex:&lastReadHex];
+        
+        [node.details appendRow:[NSString stringWithFormat:@"#%d", index]
+                               :@""
+                               :@""
+                               :@""];
+        
+        index += range.length;
+        
+        [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
+                               :lastReadHex
+                               :[NSString stringWithFormat:@"CString (length:%lu)", [symbolName length]]
+                               :[NSString stringWithFormat:@"%@\\n",symbolName]];
+        
+        [node.details setAttributes:MVMetaDataAttributeName,symbolName,nil];
+        
+        // fill in lookup table with C Strings
+        if ([self is64bit] == NO)
+        {
+            uint32_t rva = [self fileOffsetToRVA:range.location];
+            [symbolNames setObject:[NSString stringWithFormat:@"0x%X:\"%@\"", rva, symbolName]
+                            forKey:[NSNumber numberWithUnsignedLong:rva]];
+        }
+        else
+        {
+            uint64_t rva64 = [self fileOffsetToRVA64:range.location];
+            [symbolNames setObject:[NSString stringWithFormat:@"0x%qX:\"%@\"", rva64, symbolName]
+                            forKey:[NSNumber numberWithUnsignedLongLong:rva64]];
+        }
+    }
+    
+    return node;
 }
 
 @end

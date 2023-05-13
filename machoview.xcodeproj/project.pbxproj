@@ -579,7 +579,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#!/bin/bash\n# Auto Increment Version Script\nbuildPlist=\"Info.plist\"\nCFBundleShortVersionString=$(/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" $buildPlist)\nCFBuildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBuildNumber\" $buildPlist)\nCFBuildNumber=$(($CFBuildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBuildNumber $CFBuildNumber\" $buildPlist\nCFBuildDate=$(date)\n/usr/libexec/PlistBuddy -c \"Set :CFBuildDate $CFBuildDate\" $buildPlist\n# set Bundle version\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $CFBuildNumber\" $buildPlist\necho \"New build: $CFBundleShortVersionString (build: $CFBuildNumber) $CFBuildDate\"";
+			shellScript = "#!/bin/bash\n# Auto Increment Version Script\n#buildPlist=\"Info.plist\"\n#CFBundleShortVersionString=$(/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" $buildPlist)\n#CFBuildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBuildNumber\" $buildPlist)\n#CFBuildNumber=$(($CFBuildNumber + 1))\n#/usr/libexec/PlistBuddy -c \"Set :CFBuildNumber $CFBuildNumber\" $buildPlist\n#CFBuildDate=$(date)\n#/usr/libexec/PlistBuddy -c \"Set :CFBuildDate $CFBuildDate\" $buildPlist\n# set Bundle version\n#/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $CFBuildNumber\" $buildPlist\n#echo \"New build: $CFBundleShortVersionString (build: $CFBuildNumber) $CFBuildDate\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -44,6 +44,7 @@ NSString * const MVMetaDataAttributeName          = @"MVMetaDataAttribute";
 NSString * const MVLayoutUserInfoKey              = @"MVLayoutUserInfoKey";
 NSString * const MVNodeUserInfoKey                = @"MVNodeUserInfoKey";
 NSString * const MVStatusUserInfoKey              = @"MVStatusUserInfoKey";
+NSString * const MVStatusPenddingKey              = @"MVStatusPenddingKey";
 
 NSString * const MVDataTreeWillChangeNotification = @"MVDataTreeWillChangeNotification";
 NSString * const MVDataTreeDidChangeNotification  = @"MVDataTreeDidChangeNotification";
@@ -52,6 +53,7 @@ NSString * const MVDataTableChangedNotification   = @"MVDataTableChanged";
 NSString * const MVThreadStateChangedNotification = @"MVThreadStateChanged";
 
 NSString * const MVStatusTaskStarted              = @"MVStatusTaskStarted";
+NSString * const MVStatusTaskPendding             = @"MVStatusTaskPendding";
 NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
 
 //============================================================================
@@ -289,10 +291,10 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
     int keyOrdinal = getc(pFile);
     switch (keyOrdinal)
     {
-      case MVUnderlineAttributeOrdinal: [_attributes setObject:[self readStringFromFile:pFile] forKey:MVUnderlineAttributeName]; break;
-      case MVCellColorAttributeOrdinal: [_attributes setObject:[self readColorFromFile:pFile] forKey:MVCellColorAttributeName]; break;
-      case MVTextColorAttributeOrdinal: [_attributes setObject:[self readColorFromFile:pFile] forKey:MVTextColorAttributeName]; break;
-      case MVMetaDataAttributeOrdinal:  [_attributes setObject:[self readStringFromFile:pFile] forKey:MVMetaDataAttributeName]; break;
+      case MVUnderlineAttributeOrdinal: [_attributes setObject:[self readStringFromFile:pFile] ?: @"" forKey:MVUnderlineAttributeName]; break;
+      case MVCellColorAttributeOrdinal: [_attributes setObject:[self readColorFromFile:pFile] ?: @"" forKey:MVCellColorAttributeName]; break;
+      case MVTextColorAttributeOrdinal: [_attributes setObject:[self readColorFromFile:pFile] ?: @"" forKey:MVTextColorAttributeName]; break;
+      case MVMetaDataAttributeOrdinal:  [_attributes setObject:[self readStringFromFile:pFile] ?: @"" forKey:MVMetaDataAttributeName]; break;
       default: NSLog(@"warning: unknown attribute key");
     }
   }
@@ -633,9 +635,10 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
   }
   else
   {
-    NSPredicate *predicate = [NSPredicate
-                              predicateWithFormat:@"self contains[cd] %@", filter];
 
+      NSString *format = [NSString stringWithFormat:@"*%@*",filter];
+      NSPredicate *predicate = [NSPredicate
+                                predicateWithFormat:@"self LIKE [cd] %@", format];
     displayRows = [[NSMutableArray alloc] init];
     for (MVRow * row in rows)
     {
@@ -644,12 +647,18 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
         [row loadFromFile:swapFile];
       }
     
-      NSString * metadata = [row.attributes objectForKey:MVMetaDataAttributeName];
-      if (metadata == nil || [predicate evaluateWithObject:metadata] == YES)
-      {
-        [displayRows addObject:row];
+          NSString *offsetStr = row.coloumns.offsetStr;
+          NSString *dataStr = row.coloumns.dataStr;
+          NSString *descriptionStr = row.coloumns.descriptionStr;
+          NSString *valueStr = row.coloumns.valueStr;
+          
+          if ([predicate evaluateWithObject:offsetStr] == YES ||
+              [predicate evaluateWithObject:dataStr] == YES ||
+              [predicate evaluateWithObject:descriptionStr] == YES ||
+              [predicate evaluateWithObject:valueStr] == YES) {
+              [displayRows addObject:row];
+          }
       }
-    }
   }
   [tableLock unlock];
 }
@@ -1211,6 +1220,17 @@ NSString * const MVStatusTaskTerminated           = @"MVStatusTaskTerminated";
                           object:self
                         userInfo:[NSDictionary dictionaryWithObject:status forKey:MVStatusUserInfoKey]];
     });
+}
+
+- (void)updateStatus: (NSString *)status :statusString
+{
+    NSNotificationCenter * nc = [NSNotificationCenter defaultCenter];
+    [nc postNotificationName:MVThreadStateChangedNotification
+                      object:self
+                    userInfo:
+     @{MVStatusUserInfoKey:status,
+       MVStatusPenddingKey:statusString
+       }];
 }
 
 @end

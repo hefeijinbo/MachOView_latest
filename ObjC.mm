@@ -2810,11 +2810,26 @@ struct message_ref64
 }
 
 //------------------------------------------------------------------------------
+- (MVNode *)createObjC2MetaClassNode:(MVNode *)parent
+                                 caption:(NSString *)caption
+                                location:(uint32_t)location
+                                   class:(struct class_t const *)class_t {
+    return [self createObjC2Node:parent caption:caption location:location class:class_t prefix:@"ObjC2 MetaClass:"];
+}
+
 - (MVNode *)createObjC2ClassNode:(MVNode *)parent
                          caption:(NSString *)caption
                         location:(uint32_t)location
                            class:(struct class_t const *)class_t
 {  
+    return [self createObjC2Node:parent caption:caption location:location class:class_t prefix:@"ObjC2 Class:"];
+}
+
+- (MVNode *)createObjC2Node:(MVNode *)parent
+                        caption:(NSString *)caption
+                       location:(uint32_t)location
+                          class:(struct class_t const *)class_t
+                         prefix:(NSString *)prefix {
   // check for parent
   if (parent == nil)
   {
@@ -2829,7 +2844,7 @@ struct message_ref64
   }
   
   MVNodeSaver nodeSaver;
-  node = [parent insertChildWithDetails:[@"ObjC2 Class: " stringByAppendingString:caption]
+  node = [parent insertChildWithDetails:[NSString stringWithFormat:@"%@  %@",prefix,caption]
                                location:location
                                  length:sizeof(struct class_t)
                                   saver:nodeSaver];
@@ -2885,11 +2900,26 @@ struct message_ref64
 }
 
 //------------------------------------------------------------------------------
+- (MVNode *)createObjC2MetaClass64Node:(MVNode *)parent
+                                 caption:(NSString *)caption
+                                location:(uint32_t)location
+                                   class:(struct class64_t const *)class64_t {
+    return [self createObjC264Node:parent caption:caption location:location class:class64_t prefix:@"ObjC2 MetaClass64:"];
+}
+
 - (MVNode *)createObjC2Class64Node:(MVNode *)parent
                            caption:(NSString *)caption
                           location:(uint32_t)location
                              class:(struct class64_t const *)class64_t
 {  
+    return [self createObjC264Node:parent caption:caption location:location class:class64_t prefix:@"ObjC2 Class64:"];
+}
+
+- (MVNode *)createObjC264Node:(MVNode *)parent
+                        caption:(NSString *)caption
+                       location:(uint32_t)location
+                          class:(struct class64_t const *)class64_t
+                         prefix:(NSString *)prefix {
   // check for parent
   if (parent == nil)
   {
@@ -2904,7 +2934,7 @@ struct message_ref64
   }
   
   MVNodeSaver nodeSaver;
-  node = [parent insertChildWithDetails:[@"ObjC2 Class64: " stringByAppendingString:caption]
+  node = [parent insertChildWithDetails:[NSString stringWithFormat:@"%@  %@",prefix,caption]
                                location:location
                                  length:sizeof(struct class64_t)
                                   saver:nodeSaver];
@@ -3236,6 +3266,19 @@ struct message_ref64
                          caption:caption
                         location:location
                            class:class_t];
+extern BOOL g_MVAppController_ShowMetaClass;
+        
+        if (g_MVAppController_ShowMetaClass) {
+            uint32_t metaclassLoction =    [self RVAToFileOffset:class_t->isa];
+            NSString *metaclassCaption =    [self findSymbolAtRVA:class_t->isa];
+            
+            MATCH_STRUCT(class_t,metaclassLoction);
+            
+            [self createObjC2MetaClassNode:node
+                                       caption:metaclassCaption
+                                      location:metaclassLoction
+                                       class:class_t];
+        }
     }
   }
 
@@ -3290,6 +3333,19 @@ struct message_ref64
                            caption:caption
                           location:location
                              class:class64_t];
+extern BOOL g_MVAppController_ShowMetaClass;
+        
+        if (g_MVAppController_ShowMetaClass) {
+            uint32_t metaclassLoction =    [self RVA64ToFileOffset:class64_t->isa];
+            NSString *metaclassCaption =    [self findSymbolAtRVA64:class64_t->isa];
+            
+            MATCH_STRUCT(class64_t,metaclassLoction);
+            
+            [self createObjC2MetaClass64Node:node
+                                       caption:metaclassCaption
+                                      location:metaclassLoction
+                                         class:class64_t];
+        }
     }
   }
   
