@@ -151,6 +151,38 @@
   return [self replaceEscapeCharsInString:str];
 }
 
+- (NSString *)read_16string:(NSRange &)range lastReadHex:(NSString **)lastReadHex
+{
+    range.location = NSMaxRange(range);
+    uint8_t *cstr = (uint8_t *)[fileData bytes] + range.location;
+    NSUInteger readByteNum = 1;
+    NSString *endStr = [[NSString alloc] initWithBytes:cstr length:readByteNum encoding:NSNonLossyASCIIStringEncoding];
+    int zeroCount = 0;
+    BOOL isCycle = YES;
+    while (isCycle) {
+        endStr = [[NSString alloc] initWithBytes:cstr length:++readByteNum encoding:NSISO2022JPStringEncoding];
+        if ([endStr hasSuffix:@"\0"]) {
+            zeroCount++;
+            NSString *nextStr = [[NSString alloc] initWithBytes:cstr length:readByteNum + 1 encoding:NSISO2022JPStringEncoding];
+            if ([nextStr hasSuffix:@"\0"]) {
+                
+            } else if (zeroCount >= 2) {
+                isCycle = NO;
+                if (readByteNum % 2 != 0) {
+                    readByteNum--;
+                }
+            } else {
+                zeroCount = 0;
+            }
+        }
+    }
+    endStr = [[NSString alloc] initWithBytes:cstr length:readByteNum encoding:NSISO2022JPStringEncoding];
+    NSString *readStr = [[NSString alloc] initWithBytes:cstr length:readByteNum encoding:NSUTF16LittleEndianStringEncoding];
+    range.length = readByteNum;
+    if (lastReadHex) *lastReadHex = [self getHexStr:range];
+    return [self replaceEscapeCharsInString:readStr];
+}
+
 //-----------------------------------------------------------------------------
 - (NSString *)read_string:(NSRange &)range fixlen:(NSUInteger)len lastReadHex:(NSString **)lastReadHex
 {

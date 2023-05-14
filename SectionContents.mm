@@ -91,6 +91,24 @@ using namespace std;
   return node;
 }
 
+- (BOOL)isChineseWithStr:(NSString *)str
+{
+    for(NSUInteger i = 0; i < [str length]; i++)
+    {
+        int a = [str characterAtIndex:i];
+        
+        if( a > 0x4e00 && a < 0x9fff)
+        {
+            return YES;
+        }
+        else
+        {
+            return NO;
+        }
+    }
+    return NO;
+}
+
 //-----------------------------------------------------------------------------
 -(MVNode *)createCStringsNode:(MVNode *)parent
                       caption:(NSString *)caption
@@ -107,6 +125,17 @@ using namespace std;
   {
     NSString * symbolName = [dataController read_string:range lastReadHex:&lastReadHex];
     
+      if ([node.userInfo[@"sectname"] isEqualToString:@"__ustring"]) {
+          symbolName = [dataController read_16string:range lastReadHex:&lastReadHex];
+      }
+      NSUInteger len = 0;
+      if ([self isChineseWithStr:symbolName]) {
+          NSString *lenStr = [symbolName stringByReplacingOccurrencesOfString:@"\0" withString:@""];
+          len = [lenStr lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+      } else {
+          len = [symbolName length];
+      }
+      
     [node.details appendRow:[NSString stringWithFormat:@"%.8lX", range.location]
                            :lastReadHex
                            :[NSString stringWithFormat:@"CString (length:%lu)", [symbolName length]]

@@ -35,6 +35,7 @@
 - (uint64_t)    read_uleb128:(NSRange &)range;
 
 - (NSString *)  read_string:(NSRange &)range  lastReadHex:(NSString * __autoreleasing *)lastReadHex;
+- (NSString *)  read_16string:(NSRange &)range  lastReadHex:(NSString * __autoreleasing *)lastReadHex;
 - (NSString *)  read_string:(NSRange &)range  fixlen:(NSUInteger)len lastReadHex:(NSString * __autoreleasing *)lastReadHex;
 - (NSData *)    read_bytes:(NSRange &)range   length:(NSUInteger)length lastReadHex:(NSString * __autoreleasing *)lastReadHex;
 - (int64_t)     read_sleb128:(NSRange &)range lastReadHex:(NSString * __autoreleasing *)lastReadHex;
